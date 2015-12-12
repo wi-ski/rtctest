@@ -836,7 +836,6 @@
       }
     }
   };
-
   var TextSender = {
     send: function (config) {
       var root = config.root;

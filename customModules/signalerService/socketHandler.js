@@ -61,11 +61,11 @@ function ReliableSignaler(app, socketCallback) {
      * @param {string} managerSocketId - The unique identifier managers socket in the ManagerList
      */
     socket.on('man_pleb_handshake_confirm', function (plebObj) { //having two of these might be overkill
-      //tell managerlist manager has confirmed
+      //tell manager list manager has confirmed
       //tell socket to disconnect.
     });
     socket.on('pleb_man_handshake_confirm', function (plebObj) { //having two of these might be overkill
-      //tell managerlist pleb has confirmed
+      //tell manager list pleb has confirmed
       //tell socket to disconnect.
     });
     /*
