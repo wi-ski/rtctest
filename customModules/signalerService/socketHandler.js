@@ -1,21 +1,11 @@
 // require('reliable-signaler')(httpServer);
+
+
+
+var ManagerListCon = require("../managerList/index.js");
 exports.ReliableSignaler = ReliableSignaler;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+var listOfRooms = {};
 
 
 function ReliableSignaler(app, socketCallback) {
@@ -25,25 +15,44 @@ function ReliableSignaler(app, socketCallback) {
     origins: '*:*'
   });
 
-  var ManagerList = new MangerList();
+  var ManagerList = new ManagerListCon();
 
-  io.on('connection', function(socket) {
+  io.on('connection', function (socket) {
     var currentUser = socket;
+    /*
+     *  Removes manager from the ManagerList
+     *
+     * @param {string}  - The unique identifier for the new user
+     */
+    socket.on('disconnect', function () {
+      console.log("Socket %s disconnect", socket.id);
+      ManagerList.removeManager(socket.id);
+
+
+      // if (!currentUser) return;
+
+      // // autoCloseEntireSession = true;
+      // if (currentUser && currentUser.roomid && listOfRooms[currentUser.roomid]) {
+      //   delete listOfRooms[currentUser.roomid];
+      // }
+
+      // currentUser = null;
+    });
     /*
      * Takes a user id and determines if the new user should either be a "Manager" or a manager's child ("Pleb").
      * If all current managers are at max capacity (Determined by the constructor's ManagerSize param, default is 3), it sets the new user up as a new Manager
      *
      * @param {string} userId - The unique identifier for the new user
      */
-    socket.on('establish_role', function(userId) {
-      ManagerList.introduce(socket,userId);
+    socket.on('establish_role', function (userId) {
+      ManagerList.introduce(socket, userId);
     });
     /*
      * Signals to the server that its appropriate to disconnect the socket for a given pleb after having connected with manager - Still requires the manager to emit a 'pleb_connection_established' event
      *
      * @param {string} managerSocketId - The unique identifier managers socket in the ManagerList
      */
-    socket.on('manager_connection_established', function(managerSocketId) {
+    socket.on('manager_connection_established', function (managerSocketId) {
       //first step to disconnecting a plebs socket, still requires a manager's pleb connection est event to fully complete disconnect process.
     });
     /*
@@ -51,7 +60,12 @@ function ReliableSignaler(app, socketCallback) {
      *
      * @param {string} managerSocketId - The unique identifier managers socket in the ManagerList
      */
-    socket.on('pleb_connection_established', function(plebUniqueId) {
+    socket.on('man_pleb_handshake_confirm', function (plebObj) { //having two of these might be overkill
+      //tell managerlist manager has confirmed
+      //tell socket to disconnect.
+    });
+    socket.on('pleb_man_handshake_confirm', function (plebObj) { //having two of these might be overkill
+      //tell managerlist pleb has confirmed
       //tell socket to disconnect.
     });
     /*
@@ -59,33 +73,20 @@ function ReliableSignaler(app, socketCallback) {
      *
      * @param {string} pleb_id - The unique identifier of the pleb in the manager's pleb collection
      */
-    socket.on('pleb_lost', function(pleb_id) {
-      ManagerList.removePleb(socket.id,pleb_id);
+    socket.on('pleb_lost', function (pleb_id) {
+      ManagerList.removePleb(socket.id, pleb_id);
       //remove pleb id from manager's pleb list to open for new additions
     });
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-    socket.on('keep-in-server', function(roomid, callback) {
+    socket.on('keep-in-server', function (roomid, callback) {
       listOfRooms[roomid] = roomid;
       currentUser.roomid = roomid;
-      if(callback) callback();
+      if (callback) callback();
     });
 
-    socket.on('get-session-info', function(roomid, callback) {
+    socket.on('get-session-info', function (roomid, callback) {
       if (!!listOfRooms[roomid]) {
         callback(listOfRooms[roomid]);
         return;
@@ -100,24 +101,12 @@ function ReliableSignaler(app, socketCallback) {
       })();
     });
 
-    socket.on('message', function(message) {
+    socket.on('message', function (message) {
       socket.broadcast.emit('message', message);
     });
 
-    socket.on('disconnect', function() {
 
-
-      // if (!currentUser) return;
-
-      // // autoCloseEntireSession = true;
-      // if (currentUser && currentUser.roomid && listOfRooms[currentUser.roomid]) {
-      //   delete listOfRooms[currentUser.roomid];
-      // }
-
-      // currentUser = null;
-    });
-    
-    if(socketCallback) {
+    if (socketCallback) {
       socketCallback(socket);
     }
   });

@@ -1,82 +1,83 @@
 <hr>
-/room-id/<input type="text" id="room-id" placeholder="room-id" style="width: 100px;">/
+<!-- /room-id/<input type="text" id="room-id" placeholder="room-id" style="width: 100px;">/
 <button id="open">Open</button>
-<button id="join">Join</button>
+<button id="join">Join</button> -->
 <hr>
 <div id="chat-container">
-    <input type="text" id="input-text-chat" placeholder="Enter Text Chat" disabled><br>
-    <div class="chat-output"></div>
+  <input type="text" id="input-text-chat" placeholder="Enter Text Chat" disabled><br>
+  <div class="chat-output"></div>
 </div>
 
-<link rel="stylesheet" href="style.css">
 <script src="/socket.io/socket.io.js"></script>
-<script src="/speakEasyInject.js"></script>
-<script src="/reliable-signaler/signaler.js"></script>
-<script src="/DataChannel.js"></script>
+<script src="/speakEasy_Inject.js"></script>
+<script src="/speakEasy_DataChannel.js"></script>
+<script src="/speakEasy_Signaler.js"></script>
 <script>
 
-var channel = new DataChannel();
-var signaler = initReliableSignaler(channel, '/');
-channel.ondatachannel = function() {}; //<--might use for individual user messaging?
+var LocalDataChannel = new DataChannel();
+var signaler = initReliableSignaler(LocalDataChannel, '/');
 
-document.getElementById('open').onclick = function() {
-    var roomid = document.getElementById('room-id').value;
-    if (roomid.replace(/^\s+|\s+$/g, '').length <= 0) {
-        alert('Please enter room-id');
-        document.getElementById('room-id').focus();
-        return;
-    }
-    
-    signaler.createNewRoomOnServer(roomid, function() {
-        document.getElementById('open').disabled = true;
-        channel.userid = roomid;
-        channel.transmitRoomOnce = true;
-        channel.open(roomid);
-    });
-};
 
-document.getElementById('join').onclick = function() {
-    var roomid = document.getElementById('room-id').value;
-    if (roomid.replace(/^\s+|\s+$/g, '').length <= 0) {
-        alert('Please enter room-id');
-        document.getElementById('room-id').focus();
-        return;
-    }
-    
-    this.disabled = true;
-    signaler.getRoomFromServer(roomid, function(roomid) {
-        channel.connect(roomid); // setting 'channel' & connecting socket
-        
-        // setting 'roomToken' and 'broadcaster' and joining
-        channel.join({
-            id: roomid,
-            owner: roomid
-        });
-    });
-};
+LocalDataChannel.ondatachannel = function(e,q) {
+  console.log("on data LocalDataChannel",e);
+  console.log("other on data LocalDataChannel",q);
+}; //<--might use for individual user messaging?
 
-channel.onopen = function() {
-    document.getElementById('input-text-chat').disabled = false;
-};
+// document.getElementById('open').onclick = function() {
+//   var roomid = document.getElementById('room-id').value;
+//   if (roomid.replace(/^\s+|\s+$/g, '').length <= 0) {
+//     alert('Please enter room-id');
+//     document.getElementById('room-id').focus();
+//     return;
+//   }
+  
+//   signaler.createNewRoomOnServer(roomid, function() {
+//     document.getElementById('open').disabled = true;
+//     LocalDataChannel.userid = roomid;
+//     LocalDataChannel.transmitRoomOnce = true;
+//     LocalDataChannel.open(roomid);
+//   });
+// };
+
+// document.getElementById('join').onclick = function() {
+//   var roomid = document.getElementById('room-id').value;
+//   if (roomid.replace(/^\s+|\s+$/g, '').length <= 0) {
+//     alert('Please enter room-id');
+//     document.getElementById('room-id').focus();
+//     return;
+//   }
+  
+//   this.disabled = true;
+//   signaler.getRoomFromServer(roomid, function(roomid) {
+//     LocalDataChannel.connect(roomid); // setting 'LocalDataChannel' & connecting socket
+//     // setting 'roomToken' and 'broadcaster' and joining
+//     LocalDataChannel.join({
+//       id: roomid,
+//       owner: roomid
+//     });
+//   });
+// };
+
+
 
 document.getElementById('input-text-chat').onkeyup = function(e) {
-    this.value = this.value.trim();
-    if(e.keyCode != 13 || !this.value.length) return;
-    channel.send(this.value);
-    appendDIV(this.value);
-    this.value =  '';
+  this.value = this.value.trim();
+  if(e.keyCode != 13 || !this.value.length) return;
+  LocalDataChannel.send(this.value);
+  appendDIV(this.value);
+  this.value =  '';
 };
 
-channel.onmessage = appendDIV;
-
-var chatContainer = document.querySelector('.chat-output');
-
+// LocalDataChannel.onmessage = appendDIV;
 function appendDIV(event) {
-    var div = document.createElement('div');
-    div.innerHTML = event.data || event;
-    chatContainer.insertBefore(div, chatContainer.firstChild);
-    div.tabIndex = 0; div.focus();
-    
-    document.getElementById('input-text-chat').focus();
+  var chatContainer = document.querySelector('.chat-output'); //moved this in here for my eyes atm
+  var div = document.createElement('div');
+  div.innerHTML = event.data || event;
+  chatContainer.insertBefore(div, chatContainer.firstChild);
+  div.tabIndex = 0; div.focus();
+  
+  document.getElementById('input-text-chat').focus();
 }
+
+
 </script>

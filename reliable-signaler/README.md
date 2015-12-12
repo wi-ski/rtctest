@@ -53,12 +53,12 @@ To use it in your node.js code: (required)
 var httpServer = require('http').createServer(callback);
 
 require('reliable-signaler')(httpServer || expressServer || portNumber, {
-    // for custom socket handlers
-    socketCallback: function(socket) {
-        socket.on('custom-handler', function(message) {
-            socket.broadcast.emit('custom-handler', message);
-        });
-    }
+  // for custom socket handlers
+  socketCallback: function(socket) {
+    socket.on('custom-handler', function(message) {
+      socket.broadcast.emit('custom-handler', message);
+    });
+  }
 });
 ```
 
@@ -66,7 +66,7 @@ Constructor of the module `reliable-signaler` takes an `config` object where you
 
 ```javascript
 var config = {
-    socketCallback: function(socket) {}
+  socketCallback: function(socket) {}
 };
 require('reliable-signaler')(httpServer, config);
 ```
@@ -101,14 +101,14 @@ signaler.createNewRoomOnServer(connection.sessionid);
 
 // or (not recommended)
 signaler.createNewRoomOnServer(connection.sessionid, function() {
-    connection.open();
+  connection.open();
 });
 
 // or --- recommended.
 connection.open({
-    onMediaCaptured: function() {
-        signaler.createNewRoomOnServer(connection.sessionid);
-    }
+  onMediaCaptured: function() {
+    signaler.createNewRoomOnServer(connection.sessionid);
+  }
 });
 ```
 
@@ -124,30 +124,30 @@ For participants, call `getRoomFromServer` method:
 ```javascript
 // RTCMultiConnection
 signaler.getRoomFromServer('sessioin-id', function(roomid) {
-    // invoke "join" in callback
-    connection.join({
-        sessionid: roomid,
-        userid: roomid,
-        extra: {},
-        session: connection.session
-    });
-    
-    // or simply
-    connection.join(roomid);
-    
-    // or
-    connection.connect(roomid);
+  // invoke "join" in callback
+  connection.join({
+    sessionid: roomid,
+    userid: roomid,
+    extra: {},
+    session: connection.session
+  });
+  
+  // or simply
+  connection.join(roomid);
+  
+  // or
+  connection.connect(roomid);
 });
 
 // DataChannel
 signaler.getRoomFromServer('sessioin-id', function(roomid) {
-    channel.join({
-        id: roomid,
-        owner: roomid
-    });
-    
-    // or
-    channel.connect(roomid);
+  channel.join({
+    id: roomid,
+    owner: roomid
+  });
+  
+  // or
+  channel.connect(roomid);
 });
 ```
 
@@ -161,24 +161,24 @@ var connection = new RTCMultiConnection();
 var signaler = initReliableSignaler(connection, '/');
 
 btnOpenRoom.onclick = function() {
-    connection.channel = connection.sessionid = connection.userid = sessionid;
-    connection.open({
-        onMediaCaptured: function() {
-            signaler.createNewRoomOnServer(connection.sessionid);
-        }
-    });
+  connection.channel = connection.sessionid = connection.userid = sessionid;
+  connection.open({
+    onMediaCaptured: function() {
+      signaler.createNewRoomOnServer(connection.sessionid);
+    }
+  });
 };
 
 btnJoinRoom.onclick = function() {
-    signaler.getRoomFromServer(roomid, function(roomid){
-        connection.channel = connection.sessionid = roomid;
-        connection.join({
-            sessionid: roomid,
-            userid: roomid,
-            extra: {},
-            session: connection.session
-        });
+  signaler.getRoomFromServer(roomid, function(roomid){
+    connection.channel = connection.sessionid = roomid;
+    connection.join({
+      sessionid: roomid,
+      userid: roomid,
+      extra: {},
+      session: connection.session
     });
+  });
 };
 </script>
 ```
@@ -193,20 +193,20 @@ var channel = new DataChannel();
 var signaler = initReliableSignaler(channel, '/');
 
 btnOpenRoom.onclick = function() {
-    signaler.createNewRoomOnServer(roomid, function() {
-        channel.channel = channel.userid = roomid;
-        channel.open(roomid);
-    });
+  signaler.createNewRoomOnServer(roomid, function() {
+    channel.channel = channel.userid = roomid;
+    channel.open(roomid);
+  });
 };
 
 btnJoinRoom.onclick = function() {
-    signaler.getRoomFromServer(roomid, function(roomid){
-        channel.channel = roomid;
-        channel.join({
-            id: roomid,
-            owner: roomid
-        });
+  signaler.getRoomFromServer(roomid, function(roomid){
+    channel.channel = roomid;
+    channel.join({
+      id: roomid,
+      owner: roomid
     });
+  });
 };
 </script>
 ```
