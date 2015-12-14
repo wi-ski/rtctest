@@ -4,17 +4,14 @@ var fs = require("fs");
 var exp = express();
 var app = require('http').Server(exp);
 
+require('module').Module._initPaths();
 var config = {
-
-	port:8080
+	port: 1337
 }
-
 
 exp.use(express.static('client/'));
 
-require("../customModules/signalerService")(app);
+require("signalerService")(app);
 
-
-console.log("Server will be listening on port %d",config.port)
+console.log("Server will be listening on port %d", config.port);
 app.listen(config.port);
-

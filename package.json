@@ -4,27 +4,27 @@
   "main": "server/server.js",
   "dependencies": {
     "chai": "^3.4.1",
+    "datachannel-client": "^1.0.2",
     "express": "^4.13.3",
     "mocha": "^2.3.4",
-    "datachannel-client": "^1.0.2"
-
+    "socketio": "^1.0.0"
   },
   "devDependencies": {},
   "scripts": {
-  "test": "mocha",
-  "start": "node server/server.js"
+    "test": "mocha",
+    "start": "node server/server.js"
   },
   "author": "",
   "license": "ISC",
   "directories": {
-  "test": "test"
+    "test": "test"
   },
   "repository": {
-  "type": "git",
-  "url": "git+https://github.com/willdembinski/rtctest.git"
+    "type": "git",
+    "url": "git+https://github.com/willdembinski/rtctest.git"
   },
   "bugs": {
-  "url": "https://github.com/willdembinski/rtctest/issues"
+    "url": "https://github.com/willdembinski/rtctest/issues"
   },
   "homepage": "https://github.com/willdembinski/rtctest#readme",
   "description": ""

@@ -107,7 +107,6 @@
           else self.onmessage(data, userid);
         },
         onclose: function (event) {
-          console.log("+++++++++++ON CLOSE FIRED++++++++++++", event)
           var myChannels = self.channels,
             closedChannel = event.currentTarget;
 
@@ -303,7 +302,6 @@
       }
 
       function onChannelOpened(channel) {
-        console.log("ONE CHANNEL OPEN MOTHER FUCKINERERERERERERERER")
         channel.peer = peer.peer;
         RTCDataChannels.push(channel);
 

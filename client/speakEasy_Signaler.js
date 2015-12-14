@@ -1,42 +1,43 @@
 // <script src="/reliable-signaler/signaler.js"></script>
 
-function initReliableSignaler(channel, socketURL) {
-  var socket;
+function initReliableSignaler(channel) {
 
   if (!channel) throw '"channel" argument is required.';
 
   function initSocket() { //all the handlers!
-    if (socket && channel && channel.isInitiator && channel.roomid) {
-      socket.emit('keep-session', channel.roomid);
-    }
-    socket = io.connect(socketURL || '/');
-    socket.on('error', function () {
+    SpeakEasy.resetState();
+    SpeakEasy.socket = io.connect('/');
+
+    SpeakEasy.socket.on('error', function () {
       socket.isHavingError = true;
       initSocket();
     });
 
-    socket.on('disconnect', function () {
-      console.log("Socket DISConnect event fired")
-        //if pleb and ManagerchannelEstablish === true, do nothing. Otherwise initsocket()
-      socket.isHavingError = true;
-      initSocket();
+    SpeakEasy.socket.on('connect', function () {
+      SpeakEasy.socket.emit("establish_role");
+      console.log("Socket Conn with mother established");
     });
 
-    socket.on('connect', function () {
-      socket.emit("establish_role", getRandomString()); //need to check for collisions
-      console.log("Socket Connect event fired")
+    SpeakEasy.socket.on('disconnect', function () {
+      if (SpeakEasy.PlebInfo.plebStatus === true) {
+        SpeakEasy.socket = null;
+        return console.log("Pleb status established with manager and socket disconnected");
+      }
+      SpeakEasy.socket.isHavingError = true;
+      console.log("Socket disconnected for unexpected reason, trying re-init socket")
+      initSocket(); //if not pleb, means was manager or hadn't been established yet.  Reconnect
     });
 
-    socket.on('Manager_Setup', function (data) {
+    SpeakEasy.socket.on('Manager_Setup', function (data) {
       console.log("MANAGER SETUP", data);
       channel.userid = data.managerId;
       channel.transmitRoomOnce = true;
       channel.open(data.managerId);
-      SpeakEasy.ManagerInfo.managerStatus = status;
+      SpeakEasy.ManagerInfo.managerStatus = true;
       SpeakEasy.ManagerInfo.managerId = data.managerId;
     });
 
-    socket.on('Pleb_Setup', function (data) {
+    SpeakEasy.socket.on('Pleb_Setup', function (data) {
       console.log("PLEB SETUP", data);
       channel.connect(data.managerId);
       channel.join({
@@ -44,10 +45,10 @@ function initReliableSignaler(channel, socketURL) {
         owner: data.managerId
       });
       SpeakEasy.PlebInfo.plebStatus = true;
-      SpeakEasy.PlebInfo.socketId = data.plebId;
+      SpeakEasy.PlebInfo.oldSocketId = data.plebId;
     });
 
-    socket.on('message', function (data) {
+    SpeakEasy.socket.on('message', function (data) {
       if (onMessageCallbacks[data.channel]) {
         onMessageCallbacks[data.channel](data.message);
       };
@@ -69,7 +70,7 @@ function initReliableSignaler(channel, socketURL) {
       return console.warn('Internet channel seems disconnected or having issues.');
     }
     // if socket.io was disconnected out of network issues...try a reconnect
-    if (socket.isHavingError) {
+    if (SpeakEasy.socket.isHavingError) {
       initSocket();
     }
   }
@@ -81,7 +82,7 @@ function initReliableSignaler(channel, socketURL) {
     if (config.onopen) setTimeout(config.onopen, 1);
     return {
       send: function (message) {
-        socket.emit('message', {
+        SpeakEasy.socket.emit('message', {
           sender: channel.userid,
           channel: channel,
           message: message
@@ -90,49 +91,33 @@ function initReliableSignaler(channel, socketURL) {
       channel: channel
     };
   };
-  channel.onmessage = function (data) {
-    if (data.isPleb_initiation) { //check to see if is pleb connection intiation
-      return socket.emit("man_pleb_handshake_confirm", data)
+
+  channel.onmessage = function (data, rtcId) {
+    console.log("Channel on message event", data, rtcId)
+    if (data.isPleb_initiation && SpeakEasy.ManagerInfo.managerStatus) { //check to see if is pleb connection intiation
+      console.log("man_pleb_handshake_confirm", data);
+      SpeakEasy.ManagerInfo.plebs[rtcId] = {
+        oldSocketId: data.plebSocketId
+      };
+      return SpeakEasy.socket.emit("Pleb_Recieved", data.plebSocketId);
+    }
+  };
+
+  channel.onleave = function (rtcId) {
+    var plebSocketId = SpeakEasy.ManagerInfo.plebs[rtcId].oldSocketId;
+    if (SpeakEasy.ManagerInfo.managerStatus) {
+      SpeakEasy.socket.emit('Pleb_Lost', plebSocketId);
     }
   }
 
   channel.onopen = function (userid, dataChannel) {
-    if (SpeakEasy.PlebInfo.plebStatus === true) {
+    document.getElementById('input-text-chat').disabled = false;
+    if (SpeakEasy.PlebInfo.plebStatus) {
+      console.log("Pleb connection event to manager fired");
       channel.send({ //send message to manager to complete initial handshake
         isPleb_initiation: true,
-        plebSocketId: SpeakEasy.PlebInfo.socketId
+        plebSocketId: SpeakEasy.PlebInfo.oldPlebSocketId
       })
-      return socket.emit("pleb_man_handshake_confirm", somethihnniniunni)
-    }
-    document.getElementById('input-text-chat').disabled = false;
-    console.log("LocalDataChannel on open event in SIGNALER, (was in index htm;): ", userid, dataChannel);
-  };
-
-  function getRandomString() {
-    if (window.crypto && window.crypto.getRandomValues && navigator.userAgent.indexOf('Safari') === -1) {
-      var a = window.crypto.getRandomValues(new Uint32Array(3)),
-        token = '';
-      for (var i = 0, l = a.length; i < l; i++) {
-        token += a[i].toString(36);
-      }
-      return token;
-    } else {
-      return (Math.random() * new Date().getTime()).toString(36).replace(/\./g, '');
-    }
-  }
-
-  return {
-    socket: socket,
-    createNewRoomOnServer: function (roomid, successCallback) {
-      // for reusability on failures & reconnect
-      channel.roomid = roomid;
-      channel.isInitiator = true;
-      channel.userid = channel.userid || getRandomString();
-      socket.emit('keep-in-server', roomid || channel.channel, successCallback || function () {});
-    },
-    getRoomFromServer: function (roomid, callback) {
-      channel.userid = channel.userid || getRandomString();
-      socket.emit('get-session-info', roomid, callback);
     }
   };
 }
