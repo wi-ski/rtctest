@@ -7,7 +7,7 @@ var SpeakEasy = {
     plebs: {}
   },
   PlebInfo: {
-    oldSocketId: '',
+    oldPlebSocketId: '',
     plebStatus: false
   },
 

@@ -6,7 +6,10 @@ function initReliableSignaler(channel) {
 
   function initSocket() { //all the handlers!
     SpeakEasy.resetState();
-    SpeakEasy.socket = io.connect('/');
+    console.log("Init socket")
+    SpeakEasy.socket = io.connect('/', {
+      reconnect: false
+    });
 
     SpeakEasy.socket.on('error', function () {
       socket.isHavingError = true;
@@ -20,7 +23,7 @@ function initReliableSignaler(channel) {
 
     SpeakEasy.socket.on('disconnect', function () {
       if (SpeakEasy.PlebInfo.plebStatus === true) {
-        SpeakEasy.socket = null;
+        // SpeakEasy.socket = null;
         return console.log("Pleb status established with manager and socket disconnected");
       }
       SpeakEasy.socket.isHavingError = true;
@@ -45,7 +48,7 @@ function initReliableSignaler(channel) {
         owner: data.managerId
       });
       SpeakEasy.PlebInfo.plebStatus = true;
-      SpeakEasy.PlebInfo.oldSocketId = data.plebId;
+      SpeakEasy.PlebInfo.oldPlebSocketId = data.plebId;
     });
 
     SpeakEasy.socket.on('message', function (data) {
