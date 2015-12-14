@@ -4,7 +4,6 @@
   "main": "server/server.js",
   "dependencies": {
     "chai": "^3.4.1",
-    "datachannel-client": "^1.0.2",
     "express": "^4.13.3",
     "mocha": "^2.3.4",
     "socketio": "^1.0.0"
