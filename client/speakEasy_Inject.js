@@ -1,4 +1,5 @@
 var SpeakEasy = {
+  LocalDataChannel: null,
   socket: null,
 
   ManagerInfo: {
@@ -6,35 +7,55 @@ var SpeakEasy = {
     managerStatus: true,
     plebs: {}
   },
+
   PlebInfo: {
     oldPlebSocketId: '',
     plebStatus: false
   },
 
+  init: function () {
+    this.LocalDataChannel = new SpeakEasyChannel();
+    initSpeakEasySignaler(this, '/');
+  },
+
   resetState: function () {
-    //also need to reset RTC connections if manager
     this.ManagerInfo.managerStatus = false;
     this.ManagerInfo.pleb_RTC_ids = {};
     this.PlebInfo.plebStatus = false;
   },
 
+  onMessageInject: function (data, rtcId) {
+    console.log("IOIOIOIOIOIOIOIOIO", data, rtcId);
+    var message = JSON.parse(data.message);
+    if (message.isPleb_initiation && this.ManagerInfo.managerStatus) { //check to see if is pleb connection intiation
+      this.ManagerInfo.plebs[rtcId] = {
+        oldSocketId: message.plebSocketId
+      };
+      console.log("man_pleb_handshake_confirm", this.ManagerInfo.plebs);
 
-  joinRoomInject: function (configObj) {
-    //if manager, socket emit to server that pleb has joined
-    //if pleb, socket emit to server that has connected to manager
-    console.log("joinRoomInject INJECT FIRED");
+      this.socket.emit("PlebRecieve", message.plebSocketId);
+    }
   },
 
-  sendMessageInject: function (messageObj, channelObj) {
-    console.log("sendMessageInject INJECT FIRED");
+  onLeaveInject: function (rtcId) {
+    console.log("ON LEAVE INJECT FIRED", rtcId);
+    if (this.ManagerInfo.managerStatus) {
+      var plebSocketId = this.ManagerInfo.plebs[rtcId].oldSocketId;
+      this.socket.emit('Pleb_Lost', plebSocketId);
+      return delete this.ManagerInfo.plebs[rtcId];
+    }
+    this.init();
   },
 
-  leaveEventInject: function (userid, autoCloseEntireSession) {
-    //if manager, emit to server that pleb disconnected
-    //if pleb, reconnect to server?
-    console.log("leaveEventInject INJECT FIRED");
-
-
-
+  onOpenInject: function (userId) {
+    console.log("ON OPEN INJECT FIRED", userId);
+    if (this.PlebInfo.plebStatus) {
+      console.log("Pleb connection event to manager fired");
+      this.LocalDataChannel.send({ //send message to manager to complete initial handshake
+        isPleb_initiation: true,
+        plebSocketId: this.PlebInfo.oldPlebSocketId
+      })
+    }
   }
+
 }

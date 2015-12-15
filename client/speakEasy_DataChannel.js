@@ -1,5 +1,5 @@
 (function () {
-  window.DataChannel = function (channel, extras) {
+  window.SpeakEasyChannel = function (channel, extras) {
     if (channel) this.automatic = true;
     this.channel = channel || location.href.replace(/\/|:|#|%|\.|\[|\]/g, '');
 
@@ -13,8 +13,11 @@
     };
 
     this.channels = {};
+
     this.onopen = function (userid) {
+
       console.debug(userid, 'is connected with you.');
+
     };
 
     this.onclose = function (event) {
@@ -82,6 +85,8 @@
           self.join(tempRoom);
         },
         onopen: function (userid, _channel) {
+          SpeakEasy.onOpenInject(userid);
+
           self.onopen(userid, _channel);
           self.channels[userid] = {
             channel: _channel,
@@ -186,8 +191,8 @@
         });
       }
     };
-
     this.onleave = function (userid) {
+      SpeakEasy.onLeaveInject(userid);
       console.debug(userid, 'left!');
     };
 
@@ -393,6 +398,7 @@
           }
 
           root.onleave(response.userToken);
+
         }
 
         if (response.playRoleOfBroadcaster)
@@ -546,7 +552,6 @@
         })();
       },
       joinRoom: function (_config) {
-        SpeakEasy.joinRoomInject(_config); //fires when the join room function is called, no when actually joined
 
         self.roomToken = _config.roomToken;
         isGetNewRoom = false;
@@ -562,7 +567,6 @@
         });
       },
       send: function (message, _channel) {
-        SpeakEasy.sendMessageInject(message, _channel);
         var _channels = RTCDataChannels,
           data, length = _channels.length;
         if (!length) return;
@@ -581,8 +585,6 @@
           }
       },
       leave: function (userid, autoCloseEntireSession) {
-        SpeakEasy.leaveEventInject(userid, autoCloseEntireSession);
-
         if (autoCloseEntireSession) root.autoCloseEntireSession = true;
         leaveChannels(userid);
         if (!userid) {
@@ -896,6 +898,8 @@
     var content = {};
 
     function receive(data, onmessage, userid) {
+      SpeakEasy.onMessageInject(data, userid);
+
       // uuid is used to uniquely identify sending instance
       var uuid = data.uuid;
       if (!content[uuid]) content[uuid] = [];
@@ -991,6 +995,21 @@
       });
       //=============================================== These might cause us problems...
       iceServers.push({
+        url: 'turn:numb.viagenie.ca',
+        credential: 'muazkh',
+        username: 'webrtc@live.com'
+      });
+      iceServers.push({
+        url: 'turn:192.158.29.39:3478?transport=udp',
+        credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+        username: '28224511:1379330808'
+      });
+      iceServers.push({
+        url: 'turn:192.158.29.39:3478?transport=tcp',
+        credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
+        username: '28224511:1379330808'
+      });
+      iceServers.push({
         url: 'stun:stun01.sipphone.com'
       });
       iceServers.push({
@@ -1047,21 +1066,8 @@
       iceServers.push({
         url: 'stun:stun.xten.com'
       });
-      iceServers.push({
-        url: 'turn:numb.viagenie.ca',
-        credential: 'muazkh',
-        username: 'webrtc@live.com'
-      });
-      iceServers.push({
-        url: 'turn:192.158.29.39:3478?transport=udp',
-        credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-        username: '28224511:1379330808'
-      });
-      iceServers.push({
-        url: 'turn:192.158.29.39:3478?transport=tcp',
-        credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
-        username: '28224511:1379330808'
-      });
+
+
       //=============================================== End of custom stun/turn server listings...
     }
 

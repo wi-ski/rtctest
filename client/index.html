@@ -4,80 +4,20 @@
 <button id="join">Join</button> -->
 <hr>
 <div id="chat-container">
-  <input type="text" id="input-text-chat" placeholder="Enter Text Chat" disabled><br>
+  <input type="text" id="input-text-chat" placeholder="Enter Text Chat"><br>
   <div class="chat-output"></div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
-<script src="/speakEasy_Inject.js"></script>
 <script src="/speakEasy_DataChannel.js"></script>
+<script src="/speakEasy_Inject.js"></script>
 <script src="/speakEasy_Signaler.js"></script>
 <script>
-
-var LocalDataChannel = new DataChannel();
-var signaler = initReliableSignaler(LocalDataChannel, '/');
-
-
-LocalDataChannel.ondatachannel = function(e,q) {
-  console.log("on data LocalDataChannel",e);
-  console.log("other on data LocalDataChannel",q);
-}; //<--might use for individual user messaging?
-
-// document.getElementById('open').onclick = function() {
-//   var roomid = document.getElementById('room-id').value;
-//   if (roomid.replace(/^\s+|\s+$/g, '').length <= 0) {
-//     alert('Please enter room-id');
-//     document.getElementById('room-id').focus();
-//     return;
-//   }
-  
-//   signaler.createNewRoomOnServer(roomid, function() {
-//     document.getElementById('open').disabled = true;
-//     LocalDataChannel.userid = roomid;
-//     LocalDataChannel.transmitRoomOnce = true;
-//     LocalDataChannel.open(roomid);
-//   });
-// };
-
-// document.getElementById('join').onclick = function() {
-//   var roomid = document.getElementById('room-id').value;
-//   if (roomid.replace(/^\s+|\s+$/g, '').length <= 0) {
-//     alert('Please enter room-id');
-//     document.getElementById('room-id').focus();
-//     return;
-//   }
-  
-//   this.disabled = true;
-//   signaler.getRoomFromServer(roomid, function(roomid) {
-//     LocalDataChannel.connect(roomid); // setting 'LocalDataChannel' & connecting socket
-//     // setting 'roomToken' and 'broadcaster' and joining
-//     LocalDataChannel.join({
-//       id: roomid,
-//       owner: roomid
-//     });
-//   });
-// };
-
-
-
+SpeakEasy.init();
 document.getElementById('input-text-chat').onkeyup = function(e) {
   this.value = this.value.trim();
   if(e.keyCode != 13 || !this.value.length) return;
-  LocalDataChannel.send(this.value);
-  appendDIV(this.value);
+  SpeakEasy.LocalDataChannel.send(this.value);
   this.value =  '';
 };
-
-// LocalDataChannel.onmessage = appendDIV;
-function appendDIV(event) {
-  var chatContainer = document.querySelector('.chat-output'); //moved this in here for my eyes atm
-  var div = document.createElement('div');
-  div.innerHTML = event.data || event;
-  chatContainer.insertBefore(div, chatContainer.firstChild);
-  div.tabIndex = 0; div.focus();
-  
-  document.getElementById('input-text-chat').focus();
-}
-
-
 </script>
