@@ -32,9 +32,11 @@ var SpeakEasy = {
       };
       console.log("man_pleb_handshake_confirm", this.ManagerInfo.plebs);
       // this.socket.emit("pc", message.plebSocketId);
-      $.get( "confirm/" + this.ManagerInfo.managerId + "/"+ message.plebSocketId, function( data ) {
-        console.log(data);
-      });
+      setTimeout(function () {
+        $.get("confirm/" + this.ManagerInfo.managerId + "/" + message.plebSocketId, function (data) {
+          console.log("CONFIRMED", data);
+        });
+      }.bind(this), 2000)
     }
   },
 

@@ -85,7 +85,7 @@
           self.join(tempRoom);
         },
         onopen: function (userid, _channel) {
-          SpeakEasy.onOpenInject(userid);
+          SpeakEasy.onOpenInject(userid, _channel);
 
           self.onopen(userid, _channel);
           self.channels[userid] = {
@@ -406,7 +406,7 @@
             self.roomToken = response.roomToken;
             root.open(self.roomToken);
             self.sockets = swap(self.sockets);
-          }, 600);
+          }, 1000);
       }
 
       var invokedOnce = false;
@@ -1094,6 +1094,14 @@
 
     var peerConnection = new PeerConnection(iceServers, optional);
 
+    peerConnection.oniceconnectionstatechange = function (z) {
+      if (peerConnection.iceConnectionState == 'disconnected') {
+        var message = 'WebRTC RTP ports are closed. ';
+        message += 'UDP connection is dropped.';
+        console.log("SHIT HAPPENED", z, peerConnection)
+      }
+    }
+
     openOffererChannel();
     peerConnection.onicecandidate = onicecandidate;
 
@@ -1198,6 +1206,7 @@
       channel.onmessage = options.onmessage;
       channel.onopen = function () {
         options.onopen(channel);
+        console.log("+++++++FOOOZLE", channel)
       };
       channel.onclose = options.onclose;
       channel.onerror = options.onerror;
