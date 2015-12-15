@@ -32,7 +32,7 @@ function initSpeakEasySignaler(SpeakEasy) {
       initSocket(); //if not pleb, means was manager or hadn't been established yet.  Reconnect
     });
 
-    SpeakEasy.socket.on('Manager_Setup', function (data) {
+    SpeakEasy.socket.on('managersetup', function (data) {
       console.log("MANAGER SETUP", data);
       SpeakEasy.LocalDataChannel.userid = data.managerId;
       SpeakEasy.LocalDataChannel.transmitRoomOnce = true;
@@ -41,7 +41,7 @@ function initSpeakEasySignaler(SpeakEasy) {
       SpeakEasy.ManagerInfo.managerId = data.managerId;
     });
 
-    SpeakEasy.socket.on('Pleb_Setup', function (data) {
+    SpeakEasy.socket.on('plebsetup', function (data) {
       console.log("PLEB SETUP", data);
       SpeakEasy.LocalDataChannel.connect(data.managerId);
       SpeakEasy.LocalDataChannel.join({

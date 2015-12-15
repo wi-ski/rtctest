@@ -25,15 +25,13 @@ var SpeakEasy = {
   },
 
   onMessageInject: function (data, rtcId) {
-    console.log("IOIOIOIOIOIOIOIOIO", data, rtcId);
     var message = JSON.parse(data.message);
     if (message.isPleb_initiation && this.ManagerInfo.managerStatus) { //check to see if is pleb connection intiation
       this.ManagerInfo.plebs[rtcId] = {
         oldSocketId: message.plebSocketId
       };
       console.log("man_pleb_handshake_confirm", this.ManagerInfo.plebs);
-
-      this.socket.emit("PlebRecieve", message.plebSocketId);
+      this.socket.emit("pc", message.plebSocketId);
     }
   },
 
@@ -41,7 +39,7 @@ var SpeakEasy = {
     console.log("ON LEAVE INJECT FIRED", rtcId);
     if (this.ManagerInfo.managerStatus) {
       var plebSocketId = this.ManagerInfo.plebs[rtcId].oldSocketId;
-      this.socket.emit('Pleb_Lost', plebSocketId);
+      this.socket.emit('pleblost', plebSocketId);
       return delete this.ManagerInfo.plebs[rtcId];
     }
     this.init();
