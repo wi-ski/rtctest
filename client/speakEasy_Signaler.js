@@ -9,7 +9,7 @@ function initSpeakEasySignaler(SpeakEasy) {
   function initSocket() { //all the handlers!
     console.log("Init socket")
     SpeakEasy.resetState();
-    SpeakEasy.socket = io.connect('/', {
+    SpeakEasy.socket = io.connect('http://localhost:1337/', {
       reconnect: false
     });
 

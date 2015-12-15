@@ -3,7 +3,7 @@ var SpeakEasy = {
   socket: null,
 
   ManagerInfo: {
-    oldSocketId: '',
+    managerId: '',
     managerStatus: true,
     plebs: {}
   },
@@ -31,12 +31,15 @@ var SpeakEasy = {
         oldSocketId: message.plebSocketId
       };
       console.log("man_pleb_handshake_confirm", this.ManagerInfo.plebs);
-      this.socket.emit("pc", message.plebSocketId);
+      // this.socket.emit("pc", message.plebSocketId);
+      $.get( "confirm/" + this.ManagerInfo.managerId + "/"+ message.plebSocketId, function( data ) {
+        console.log(data);
+      });
     }
   },
 
   onLeaveInject: function (rtcId) {
-    console.log("ON LEAVE INJECT FIRED", rtcId);
+    // console.log("ON LEAVE INJECT FIRED", rtcId);
     if (this.ManagerInfo.managerStatus) {
       var plebSocketId = this.ManagerInfo.plebs[rtcId].oldSocketId;
       this.socket.emit('pleblost', plebSocketId);
