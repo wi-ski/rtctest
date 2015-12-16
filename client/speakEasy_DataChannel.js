@@ -1,5 +1,5 @@
-//This library is almost entirely written by MuazKhan with some minor, albeit poorly, implemented
-//injected statements to listen for events that tie into SpeakEasy functionality.
+//This webRTC library was HUGELY inspired/copied from Muaz Khans DataChannel.js
+//Thank you Muaz for everything you've done for the RTC community, you're a saint.
 
 (function () {
   window.SpeakEasyChannel = function (channel, extras) {
@@ -9,7 +9,7 @@
     extras = extras || {};
 
     var self = this,
-      dataConnector, fileReceiver, textReceiver;
+      dataConnector, textReceiver;
 
     this.onmessage = function (message, userid) {
       console.debug(userid, 'sent message:', message);
@@ -18,9 +18,7 @@
     this.channels = {};
 
     this.onopen = function (userid) {
-
       console.debug(userid, 'is connected with you.');
-
     };
 
     this.onclose = function (event) {
@@ -29,20 +27,6 @@
 
     this.onerror = function (event) {
       console.error('data channel error:', event);
-    };
-
-    // by default; received file will be auto-saved to disk
-    this.autoSaveToDisk = true;
-    this.onFileReceived = function (fileName) {
-      console.debug('File <', fileName, '> received successfully.');
-    };
-
-    this.onFileSent = function (file) {
-      console.debug('File <', file.name, '> sent successfully.');
-    };
-
-    this.onFileProgress = function (packets) {
-      console.debug('<', packets.remaining, '> items remaining.');
     };
 
     function prepareInit(callback) {
@@ -54,7 +38,6 @@
 
       if (!self.openSignalingChannel) {
         if (typeof self.transmitRoomOnce == 'undefined') self.transmitRoomOnce = true;
-        //removed the singaler from here.
         if (!window.Firebase) {
           var script = document.createElement('script');
           script.src = 'https://www.webrtc-experiment.com/firebase.js';
@@ -69,7 +52,6 @@
 
       self.config = {
         ondatachannel: function (room) {
-
           if (!dataConnector) {
             self.room = room;
             return;
@@ -89,7 +71,6 @@
         },
         onopen: function (userid, _channel) {
           SpeakEasy.onOpenInject(userid);
-
           self.onopen(userid, _channel);
           self.channels[userid] = {
             channel: _channel,
@@ -108,9 +89,6 @@
 
           if (data.type === 'text')
             textReceiver.receive(data, self.onmessage, userid);
-
-          else if (typeof data.maxChunks != 'undefined')
-            fileReceiver.receive(data, self);
 
           else self.onmessage(data, userid);
         },
@@ -132,7 +110,6 @@
         new DataConnector(self, self.config) :
         new SocketConnector(self.channel, self.config);
 
-      fileReceiver = new FileReceiver(self);
       textReceiver = new TextReceiver(self);
 
       if (self.room) self.config.ondatachannel(self.room);
@@ -170,32 +147,15 @@
     };
 
     this.send = function (data, _channel) {
-      if (!data) throw 'No file, data or text message to share.';
-      if (typeof data.size != 'undefined' && typeof data.type != 'undefined') {
-        FileSender.send({
-          file: data,
-          channel: dataConnector,
-          onFileSent: function (file) {
-            self.onFileSent(file);
-          },
-          onFileProgress: function (packets, uuid) {
-            self.onFileProgress(packets, uuid);
-          },
-
-          _channel: _channel,
-          root: self
-        });
-      } else {
-        TextSender.send({
-          text: data,
-          channel: dataConnector,
-          _channel: _channel,
-          root: self
-        });
-      }
+      if (!data) throw 'Send was called but no message was provided.';
+      TextSender.send({
+        text: data,
+        channel: dataConnector,
+        _channel: _channel,
+        root: self
+      });
     };
     this.onleave = function (userid) {
-      SpeakEasy.onLeaveInject(userid);
       console.debug(userid, 'left!');
     };
 
@@ -212,7 +172,6 @@
       }
 
       if (!isOpenNewSession || isNonFirebaseClient) self.connect();
-
       // for non-firebase clients
       if (isNonFirebaseClient)
         setTimeout(function () {
@@ -305,7 +264,6 @@
           peerConfig.offerSDP = offerSDP;
           peerConfig.onAnswerSDP = sendsdp;
         }
-        //testtesttest
         peer = RTCPeerConnection(peerConfig, _config);
       }
 
@@ -626,219 +584,6 @@
   var isFirefox = !!navigator.mozGetUserMedia;
   var chromeVersion = !!navigator.mozGetUserMedia ? 0 : parseInt(navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./)[2]);
 
-  var FileSender = {
-    send: function (config) {
-      var root = config.root;
-      var channel = config.channel;
-      var privateChannel = config._channel;
-      var file = config.file;
-
-      if (!config.file) {
-        console.error('You must attach/select a file.');
-        return;
-      }
-
-      // max chunk sending limit on chrome is 64k
-      // max chunk receiving limit on firefox is 16k
-      var packetSize = (!!navigator.mozGetUserMedia || root.preferSCTP) ? 15 * 1000 : 1 * 1000;
-
-      if (root.chunkSize) {
-        packetSize = root.chunkSize;
-      }
-
-      var textToTransfer = '';
-      var numberOfPackets = 0;
-      var packets = 0;
-
-      file.uuid = getRandomString();
-
-      function processInWebWorker() {
-        var blob = URL.createObjectURL(new Blob(['function readFile(_file) {postMessage(new FileReaderSync().readAsDataURL(_file));};this.onmessage =  function (e) {readFile(e.data);}'], {
-          type: 'application/javascript'
-        }));
-
-        var worker = new Worker(blob);
-        URL.revokeObjectURL(blob);
-        return worker;
-      }
-
-      if (!!window.Worker && !isMobileDevice) {
-        var webWorker = processInWebWorker();
-
-        webWorker.onmessage = function (event) {
-          onReadAsDataURL(event.data);
-        };
-
-        webWorker.postMessage(file);
-      } else {
-        var reader = new FileReader();
-        reader.onload = function (e) {
-          onReadAsDataURL(e.target.result);
-        };
-        reader.readAsDataURL(file);
-      }
-
-      function onReadAsDataURL(dataURL, text) {
-        var data = {
-          type: 'file',
-          uuid: file.uuid,
-          maxChunks: numberOfPackets,
-          currentPosition: numberOfPackets - packets,
-          name: file.name,
-          fileType: file.type,
-          size: file.size
-        };
-
-        if (dataURL) {
-          text = dataURL;
-          numberOfPackets = packets = data.packets = parseInt(text.length / packetSize);
-
-          file.maxChunks = data.maxChunks = numberOfPackets;
-          data.currentPosition = numberOfPackets - packets;
-
-          if (root.onFileSent) root.onFileSent(file);
-        }
-
-        if (root.onFileProgress) root.onFileProgress({
-          remaining: packets--,
-          length: numberOfPackets,
-          sent: numberOfPackets - packets,
-
-          maxChunks: numberOfPackets,
-          uuid: file.uuid,
-          currentPosition: numberOfPackets - packets
-        }, file.uuid);
-
-        if (text.length > packetSize) data.message = text.slice(0, packetSize);
-        else {
-          data.message = text;
-          data.last = true;
-          data.name = file.name;
-
-          file.url = URL.createObjectURL(file);
-          root.onFileSent(file, file.uuid);
-        }
-
-        channel.send(data, privateChannel);
-
-        textToTransfer = text.slice(data.message.length);
-        if (textToTransfer.length) {
-          setTimeout(function () {
-            onReadAsDataURL(null, textToTransfer);
-          }, root.chunkInterval || 100);
-        }
-      }
-    }
-  };
-
-  function FileReceiver(root) {
-    var content = {},
-      packets = {},
-      numberOfPackets = {};
-
-    function receive(data) {
-      var uuid = data.uuid;
-
-      if (typeof data.packets !== 'undefined') {
-        numberOfPackets[uuid] = packets[uuid] = parseInt(data.packets);
-      }
-
-      if (root.onFileProgress) root.onFileProgress({
-        remaining: packets[uuid]--,
-        length: numberOfPackets[uuid],
-        received: numberOfPackets[uuid] - packets[uuid],
-
-        maxChunks: numberOfPackets[uuid],
-        uuid: uuid,
-        currentPosition: numberOfPackets[uuid] - packets[uuid]
-      }, uuid);
-
-      if (!content[uuid]) content[uuid] = [];
-
-      content[uuid].push(data.message);
-
-      if (data.last) {
-        var dataURL = content[uuid].join('');
-
-        FileConverter.DataURLToBlob(dataURL, data.fileType, function (blob) {
-          blob.uuid = uuid;
-          blob.name = data.name;
-          blob.type = data.fileType;
-          blob.extra = data.extra || {};
-
-          blob.url = (window.URL || window.webkitURL).createObjectURL(blob);
-
-          if (root.autoSaveToDisk) {
-            FileSaver.SaveToDisk(blob.url, data.name);
-          }
-
-          if (root.onFileReceived) root.onFileReceived(blob);
-
-          delete content[uuid];
-        });
-      }
-    }
-
-    return {
-      receive: receive
-    };
-  }
-
-  var FileSaver = {
-    SaveToDisk: function (fileUrl, fileName) {
-      var hyperlink = document.createElement('a');
-      hyperlink.href = fileUrl;
-      hyperlink.target = '_blank';
-      hyperlink.download = fileName || fileUrl;
-
-      var mouseEvent = new MouseEvent('click', {
-        view: window,
-        bubbles: true,
-        cancelable: true
-      });
-
-      hyperlink.dispatchEvent(mouseEvent);
-      (window.URL || window.webkitURL).revokeObjectURL(hyperlink.href);
-    }
-  };
-
-  var FileConverter = {
-    DataURLToBlob: function (dataURL, fileType, callback) {
-
-      function processInWebWorker() {
-        var blob = URL.createObjectURL(new Blob(['function getBlob(_dataURL, _fileType) {var binary = atob(_dataURL.substr(_dataURL.indexOf(",") + 1)),i = binary.length,view = new Uint8Array(i);while (i--) {view[i] = binary.charCodeAt(i);};postMessage(new Blob([view], {type: _fileType}));};this.onmessage =  function (e) {var data = JSON.parse(e.data); getBlob(data.dataURL, data.fileType);}'], {
-          type: 'application/javascript'
-        }));
-
-        var worker = new Worker(blob);
-        URL.revokeObjectURL(blob);
-        return worker;
-      }
-
-      if (!!window.Worker && !isMobileDevice) {
-        var webWorker = processInWebWorker();
-
-        webWorker.onmessage = function (event) {
-          callback(event.data);
-        };
-
-        webWorker.postMessage(JSON.stringify({
-          dataURL: dataURL,
-          fileType: fileType
-        }));
-      } else {
-        var binary = atob(dataURL.substr(dataURL.indexOf(',') + 1)),
-          i = binary.length,
-          view = new Uint8Array(i);
-
-        while (i--) {
-          view[i] = binary.charCodeAt(i);
-        }
-
-        callback(new Blob([view]));
-      }
-    }
-  };
   var TextSender = {
     send: function (config) {
       var root = config.root;
@@ -952,7 +697,8 @@
       });
 
       iceServers.push({
-        url: 'stun:stun.services.mozilla.com'
+        url: 'stun:stun.services.mozilla.SocketConnector
+        SocketConnectorcom '
       });
     }
 
@@ -1012,69 +758,33 @@
         credential: 'JZEOEt2V3Qb0y27GRntt2u2PAYA=',
         username: '28224511:1379330808'
       });
-      iceServers.push({
-        url: 'stun:stun01.sipphone.com'
+      var SpeakEasyStunServers = [ //Some free servers that may or may not work
+        'stun:stun01.sipphone.com',
+        'stun:stun.ekiga.net',
+        'stun:stun.fwdnet.net',
+        'stun:stun.ideasip.com',
+        'stun:stun.iptel.org',
+        'stun:stun.rixtelecom.se',
+        'stun:stun.schlund.de',
+        'stun:stun.l.google.com:19302',
+        'stun:stun1.l.google.com:19302',
+        'stun:stun2.l.google.com:19302',
+        'stun:stun3.l.google.com:19302',
+        'stun:stun4.l.google.com:19302',
+        'stun:stunserver.org',
+        'stun:stun.softjoys.com',
+        'stun:stun.voiparound.com',
+        'stun:stun.voipbuster.com',
+        'stun:stun.voipstunt.com',
+        'stun:stun.voxgratia.org',
+        'stun:stun.xten.com'
+      ]
+      SpeakEasyStunServers.forEach(function (server) {
+        iceServers.push({
+          url: server
+        });
       });
-      iceServers.push({
-        url: 'stun:stun.ekiga.net'
-      });
-      iceServers.push({
-        url: 'stun:stun.fwdnet.net'
-      });
-      iceServers.push({
-        url: 'stun:stun.ideasip.com'
-      });
-      iceServers.push({
-        url: 'stun:stun.iptel.org'
-      });
-      iceServers.push({
-        url: 'stun:stun.rixtelecom.se'
-      });
-      iceServers.push({
-        url: 'stun:stun.schlund.de'
-      });
-      iceServers.push({
-        url: 'stun:stun.l.google.com:19302'
-      });
-      iceServers.push({
-        url: 'stun:stun1.l.google.com:19302'
-      });
-      iceServers.push({
-        url: 'stun:stun2.l.google.com:19302'
-      });
-      iceServers.push({
-        url: 'stun:stun3.l.google.com:19302'
-      });
-      iceServers.push({
-        url: 'stun:stun4.l.google.com:19302'
-      });
-      iceServers.push({
-        url: 'stun:stunserver.org'
-      });
-      iceServers.push({
-        url: 'stun:stun.softjoys.com'
-      });
-      iceServers.push({
-        url: 'stun:stun.voiparound.com'
-      });
-      iceServers.push({
-        url: 'stun:stun.voipbuster.com'
-      });
-      iceServers.push({
-        url: 'stun:stun.voipstunt.com'
-      });
-      iceServers.push({
-        url: 'stun:stun.voxgratia.org'
-      });
-      iceServers.push({
-        url: 'stun:stun.xten.com'
-      });
-
-
-      //=============================================== End of custom stun/turn server listings...
     }
-
-    if (options.iceServers) iceServers = options.iceServers;
 
     iceServers = {
       iceServers: iceServers
@@ -1097,7 +807,7 @@
 
     var peerConnection = new PeerConnection(iceServers, optional);
 
-    peerConnection.SpeakEasyConfig = config;
+    peerConnection.SpeakEasyConfig = config; //to get access to userid on disconnect
 
     peerConnection.oniceconnectionstatechange = function (event) {
       if (peerConnection.iceConnectionState == 'disconnected') {
@@ -1134,7 +844,6 @@
 
     function createOffer() {
       if (!options.onOfferSDP) return;
-
       peerConnection.createOffer(function (sessionDescription) {
         sessionDescription.sdp = setBandwidth(sessionDescription.sdp);
         peerConnection.setLocalDescription(sessionDescription);

@@ -86,11 +86,12 @@ function initSpeakEasySignaler(SpeakEasy) {
     if (!navigator.onLine) {
       return console.warn('Internet channel seems disconnected or having issues.');
     }
-    // if socket.io was disconnected out of network issues...try a reconnect
+
     if (SpeakEasy.socket.isHavingError) {
       initSocket();
     }
   }
+
   listenEventHandler('load', onLineOffLineHandler);
   listenEventHandler('online', onLineOffLineHandler);
   listenEventHandler('offline', onLineOffLineHandler);
