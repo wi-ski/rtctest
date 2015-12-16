@@ -13,7 +13,6 @@
 <script>
 SpeakEasy.init();
 document.getElementById('input-text-chat').onkeyup = function(e) {
-  this.value = this.value.trim();
   if(e.keyCode != 13 || !this.value.length) return;
   SpeakEasy.LocalDataChannel.send(this.value);
   this.value =  '';

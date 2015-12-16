@@ -5,12 +5,21 @@ var SpeakEasy = {
   ManagerInfo: {
     managerId: '',
     managerStatus: true,
-    plebs: {}
+    plebs: {},
+    broadcast: function (msg) {
+      //send to all plebs
+    },
+    message: function (plebId, msg) {
+      //send to plebid
+    }
   },
 
   PlebInfo: {
     oldPlebSocketId: '',
-    plebStatus: false
+    plebStatus: false,
+    respond: function (msg) {
+      //send to manager
+    }
   },
 
   init: function () {
@@ -31,17 +40,14 @@ var SpeakEasy = {
         oldSocketId: message.plebSocketId
       };
       console.log("man_pleb_handshake_confirm", this.ManagerInfo.plebs);
-      // this.socket.emit("pc", message.plebSocketId);
-      setTimeout(function () {
-        $.get("confirm/" + this.ManagerInfo.managerId + "/" + message.plebSocketId, function (data) {
-          console.log("CONFIRMED", data);
-        });
-      }.bind(this), 2000)
+      this.socket.emit("pc", message.plebSocketId);
     }
+    console.log("PLEB RECIEVED MEASSAGE: ", data, rtcId)
+
   },
 
   onLeaveInject: function (rtcId) {
-    // console.log("ON LEAVE INJECT FIRED", rtcId);
+    console.log("ON LEAVE INJECT FIRED", rtcId);
     if (this.ManagerInfo.managerStatus) {
       var plebSocketId = this.ManagerInfo.plebs[rtcId].oldSocketId;
       this.socket.emit('pleblost', plebSocketId);

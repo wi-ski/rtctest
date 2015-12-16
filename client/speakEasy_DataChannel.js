@@ -1,3 +1,6 @@
+//This library is almost entirely written by MuazKhan with some minor, albeit poorly, implemented
+//injected statements to listen for events that tie into SpeakEasy functionality.
+
 (function () {
   window.SpeakEasyChannel = function (channel, extras) {
     if (channel) this.automatic = true;
@@ -85,7 +88,7 @@
           self.join(tempRoom);
         },
         onopen: function (userid, _channel) {
-          SpeakEasy.onOpenInject(userid, _channel);
+          SpeakEasy.onOpenInject(userid);
 
           self.onopen(userid, _channel);
           self.channels[userid] = {
@@ -302,8 +305,8 @@
           peerConfig.offerSDP = offerSDP;
           peerConfig.onAnswerSDP = sendsdp;
         }
-
-        peer = RTCPeerConnection(peerConfig);
+        //testtesttest
+        peer = RTCPeerConnection(peerConfig, _config);
       }
 
       function onChannelOpened(channel) {
@@ -935,7 +938,7 @@
   window.moz = !!navigator.mozGetUserMedia;
   window.IsDataChannelSupported = !((moz && !navigator.mozGetUserMedia) || (!moz && !navigator.webkitGetUserMedia));
 
-  function RTCPeerConnection(options) {
+  function RTCPeerConnection(options, config) {
     var w = window,
       PeerConnection = w.mozRTCPeerConnection || w.webkitRTCPeerConnection,
       SessionDescription = w.mozRTCSessionDescription || w.RTCSessionDescription,
@@ -1094,14 +1097,13 @@
 
     var peerConnection = new PeerConnection(iceServers, optional);
 
-    peerConnection.oniceconnectionstatechange = function (z) {
+    peerConnection.SpeakEasyConfig = config;
+
+    peerConnection.oniceconnectionstatechange = function (event) {
       if (peerConnection.iceConnectionState == 'disconnected') {
-        var message = 'WebRTC RTP ports are closed. ';
-        message += 'UDP connection is dropped.';
-        console.log("SHIT HAPPENED", z, peerConnection)
+        SpeakEasy.onLeaveInject(event.currentTarget.SpeakEasyConfig.channel);
       }
     }
-
     openOffererChannel();
     peerConnection.onicecandidate = onicecandidate;
 
@@ -1206,7 +1208,6 @@
       channel.onmessage = options.onmessage;
       channel.onopen = function () {
         options.onopen(channel);
-        console.log("+++++++FOOOZLE", channel)
       };
       channel.onclose = options.onclose;
       channel.onerror = options.onerror;
@@ -1245,7 +1246,6 @@
           candidate: candidate.candidate
         }));
       },
-
       peer: peerConnection,
       channel: channel,
       sendData: function (message) {

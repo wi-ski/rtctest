@@ -10,6 +10,7 @@ function initSpeakEasySignaler(SpeakEasy) {
     console.log("Init socket")
     SpeakEasy.resetState();
     SpeakEasy.socket = io.connect('http://localhost:1337/', {
+      'force new connection': true,
       reconnect: false
     });
 
@@ -59,6 +60,7 @@ function initSpeakEasySignaler(SpeakEasy) {
     });
 
   }
+
   SpeakEasy.LocalDataChannel.openSignalingChannel = function (config) {
     var channel = config.channel || this.channel || 'default-channel';
     onMessageCallbacks[channel] = config.onmessage;
