@@ -10,7 +10,7 @@ var config = {
 }
 
 exp.use(express.static('client/'));
-require("signalerService")(app,exp);
+require("signalerService")(app);
 
 console.log("Server will be listening on port %d", config.port);
 app.listen(config.port);
