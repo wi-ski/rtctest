@@ -40,7 +40,7 @@ var SpeakEasy = {
         oldSocketId: message.plebSocketId
       };
       console.log("Pleb handshake confirmed", this.ManagerInfo.plebs);
-      this.socket.emit("pc", message.plebSocketId);
+      this.socket.emit("plebrecieved", message.plebSocketId);
     }
     console.log("PLEB RECIEVED MEASSAGE: ", data, rtcId)
 

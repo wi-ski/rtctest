@@ -697,8 +697,7 @@
       });
 
       iceServers.push({
-        url: 'stun:stun.services.mozilla.SocketConnector
-        SocketConnectorcom '
+        url: 'stun:stun.services.mozilla.com'
       });
     }
 
