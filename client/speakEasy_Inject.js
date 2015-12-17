@@ -6,6 +6,7 @@ var SpeakEasy = {
     managerId: '',
     managerStatus: true,
     plebs: {},
+    plebRtcIds: {},
     broadcast: function (msg) {
       //send to all plebs
     },
@@ -29,13 +30,14 @@ var SpeakEasy = {
 
   resetState: function () {
     this.ManagerInfo.managerStatus = false;
-    this.ManagerInfo.pleb_RTC_ids = {};
+    this.ManagerInfo.plebRtcIds = {};
     this.PlebInfo.plebStatus = false;
   },
 
   onMessageInject: function (data, rtcId) {
     var message = JSON.parse(data.message);
     if (message.isPleb_initiation && this.ManagerInfo.managerStatus) { //check to see if is pleb connection intiation
+      this.ManagerInfo.plebRtcIds[message.plebSocketId] = rtcId;
       this.ManagerInfo.plebs[rtcId] = {
         oldSocketId: message.plebSocketId
       };

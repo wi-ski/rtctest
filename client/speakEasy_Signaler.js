@@ -53,6 +53,17 @@ function initSpeakEasySignaler(SpeakEasy) {
       SpeakEasy.PlebInfo.oldPlebSocketId = data.plebId;
     });
 
+    SpeakEasy.socket.on('plebeject', function (data) {
+
+      if (SpeakEasy.ManagerInfo.managerStatus) {
+        console.log("EJECT IS FIRING")
+        var plebrtcid = SpeakEasy.ManagerInfo.plebRtcIds[data];
+        SpeakEasy.LocalDataChannel.channels[plebrtcid].channel.peer.close(plebrtcid);
+        //so ghettoo
+        delete SpeakEasy.ManagerInfo.plebs[data];
+      };
+    });
+
     SpeakEasy.socket.on('message', function (data) {
       if (onMessageCallbacks[data.channel]) {
         onMessageCallbacks[data.channel](data.message);

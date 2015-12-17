@@ -160,6 +160,7 @@
     };
 
     this.leave = this.eject = function (userid) {
+      console.log(self)
       dataConnector.leave(userid, self.autoCloseEntireSession);
     };
 
