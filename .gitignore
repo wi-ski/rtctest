@@ -1,8 +1,2 @@
 node_modules/*
-!node_modules/managerList
-!node_modules/signalerService
-!node_modules/sysLog
-!node_modules/socket.io-client
-!node_modules/socket.io-parser
-!node_modules/socket.io-adapter
 syslog.txt
