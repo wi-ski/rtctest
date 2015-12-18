@@ -2,6 +2,30 @@
 //Thank you Muaz for everything you've done for the RTC community, you're a saint.
 
 (function () {
+//GLOBALSGLOBALSGLOBALSGLOBALSGLOBALSGLOBALSGLOBALSGLOBALSGLOBALSGLOBALSGLOBALSGLOBALSGLOBALSGLOBALSGLOBALSGLOBALS
+  function swap(arr) {
+    var swapped = [],
+      length = arr.length;
+    for (var i = 0; i < length; i++)
+      if (arr[i]) swapped.push(arr[i]);
+    return swapped;
+  }
+
+  function getRandomString() {
+    return (Math.random() * new Date().getTime()).toString(36).replace(/\./g, '-');
+  }
+
+  window.userid = getRandomString();
+
+  var isMobileDevice = navigator.userAgent.match(/Android|iPhone|iPad|iPod|BlackBerry|IEMobile/i);
+  var isChrome = !!navigator.webkitGetUserMedia;
+  var isFirefox = !!navigator.mozGetUserMedia;
+  var chromeVersion = !!navigator.mozGetUserMedia ? 0 : parseInt(navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./)[2]);
+  window.moz = !!navigator.mozGetUserMedia;
+  window.IsDataChannelSupported = !((moz && !navigator.mozGetUserMedia) || (!moz && !navigator.webkitGetUserMedia));
+// GLOBALSGLOBALSGLOBALSGLOBALSGLOBALSGLOBALSGLOBALSGLOBALSGLOBALSGLOBALSGLOBALSGLOBALSGLOBALSGLOBALSGLOBALSGLOBALS
+
+
   window.SpeakEasyChannel = function (channel, extras) {
     if (channel) this.automatic = true;
     this.channel = channel || location.href.replace(/\/|:|#|%|\.|\[|\]/g, '');
@@ -160,7 +184,6 @@
     };
 
     this.leave = this.eject = function (userid) {
-      console.log(self)
       dataConnector.leave(userid, self.autoCloseEntireSession);
     };
 
@@ -202,6 +225,20 @@
       } else self.openNewSession(false, true);
     }
   };
+
+
+
+
+
+
+
+//  ____    _  _____  _    ____ ___  _   _ _   _ _____ ____ _____ ___  ____  
+// |  _ \  / \|_   _|/ \  / ___/ _ \| \ | | \ | | ____/ ___|_   _/ _ \|  _ \ 
+// | | | |/ _ \ | | / _ \| |  | | | |  \| |  \| |  _|| |     | || | | | |_) |
+// | |_| / ___ \| |/ ___ \ |__| |_| | |\  | |\  | |__| |___  | || |_| |  _ < 
+// |____/_/   \_\_/_/   \_\____\___/|_| \_|_| \_|_____\____| |_| \___/|_| \_\
+                                                                          
+
 
   function DataConnector(root, config) {
     var self = {};
@@ -557,6 +594,13 @@
     };
   }
 
+//  ____             _        _                                  _             
+// / ___|  ___   ___| | _____| |_ ___ ___  _ __  _ __   ___  ___| |_ ___  _ __ 
+// \___ \ / _ \ / __| |/ / _ \ __/ __/ _ \| '_ \| '_ \ / _ \/ __| __/ _ \| '__|
+//  ___) | (_) | (__|   <  __/ || (_| (_) | | | | | | |  __/ (__| || (_) | |   
+// |____/ \___/ \___|_|\_\___|\__\___\___/|_| |_|_| |_|\___|\___|\__\___/|_|   
+                                                                            
+
   function SocketConnector(_channel, config) {
     var channel = config.openSocket({
       channel: _channel,
@@ -574,16 +618,14 @@
     };
   }
 
-  function getRandomString() {
-    return (Math.random() * new Date().getTime()).toString(36).replace(/\./g, '-');
-  }
 
-  window.userid = getRandomString();
+//  _____ _______  _______ ____  _____ _   _ ____  
+// |_   _| ____\ \/ /_   _/ ___|| ____| \ | |  _ \ 
+//   | | |  _|  \  /  | | \___ \|  _| |  \| | | | |
+//   | | | |___ /  \  | |  ___) | |___| |\  | |_| |
+//   |_| |_____/_/\_\ |_| |____/|_____|_| \_|____/ 
+                                                
 
-  var isMobileDevice = navigator.userAgent.match(/Android|iPhone|iPad|iPod|BlackBerry|IEMobile/i);
-  var isChrome = !!navigator.webkitGetUserMedia;
-  var isFirefox = !!navigator.mozGetUserMedia;
-  var chromeVersion = !!navigator.mozGetUserMedia ? 0 : parseInt(navigator.userAgent.match(/Chrom(e|ium)\/([0-9]+)\./)[2]);
 
   var TextSender = {
     send: function (config) {
@@ -640,8 +682,13 @@
     }
   };
 
-  // _______________
-  // TextReceiver.js
+ //  _____ _______  _______ ____  _____ ____ ___ _______     _______ 
+ // |_   _| ____\ \/ /_   _|  _ \| ____/ ___|_ _| ____\ \   / / ____|
+ //   | | |  _|  \  /  | | | |_) |  _|| |    | ||  _|  \ \ / /|  _|  
+ //   | | | |___ /  \  | | |  _ <| |__| |___ | || |___  \ V / | |___ 
+ //   |_| |_____/_/\_\ |_| |_| \_\_____\____|___|_____|  \_/  |_____|
+                                                                  
+
 
   function TextReceiver() {
     var content = {};
@@ -673,16 +720,16 @@
     };
   }
 
-  function swap(arr) {
-    var swapped = [],
-      length = arr.length;
-    for (var i = 0; i < length; i++)
-      if (arr[i]) swapped.push(arr[i]);
-    return swapped;
-  }
 
-  window.moz = !!navigator.mozGetUserMedia;
-  window.IsDataChannelSupported = !((moz && !navigator.mozGetUserMedia) || (!moz && !navigator.webkitGetUserMedia));
+
+
+
+//  ____                 ____                            _   _             
+// |  _ \ ___  ___ _ __ / ___|___  _ __  _ __   ___  ___| |_(_) ___  _ __  
+// | |_) / _ \/ _ \ '__| |   / _ \| '_ \| '_ \ / _ \/ __| __| |/ _ \| '_ \ 
+// |  __/  __/  __/ |  | |__| (_) | | | | | | |  __/ (__| |_| | (_) | | | |
+// |_|   \___|\___|_|   \____\___/|_| |_|_| |_|\___|\___|\__|_|\___/|_| |_|
+                                                                        
 
   function RTCPeerConnection(options, config) {
     var w = window,
@@ -696,22 +743,18 @@
       iceServers.push({
         url: 'stun:23.21.150.121'
       });
-
       iceServers.push({
         url: 'stun:stun.services.mozilla.com'
       });
     }
-
     if (isChrome) {
       iceServers.push({
         url: 'stun:stun.l.google.com:19302'
       });
-
       iceServers.push({
         url: 'stun:stun.anyfirewall.com:3478'
       });
     }
-
     if (isChrome && chromeVersion < 28) {
       iceServers.push({
         url: 'turn:homeo@turn.bistri.com:80?transport=udp',
@@ -903,7 +946,6 @@
       // protocol: 'text/chat', preset: true, stream: 16
       // maxRetransmits:0 && ordered:false
       var dataChannelDict = {};
-
       if (!moz && !options.preferSCTP) {
         dataChannelDict.reliable = false; // Deprecated!
       }

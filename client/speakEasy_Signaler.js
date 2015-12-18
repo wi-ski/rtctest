@@ -58,8 +58,8 @@ function initSpeakEasySignaler(SpeakEasy) {
       if (SpeakEasy.ManagerInfo.managerStatus) {
         console.log("EJECT IS FIRING")
         var plebrtcid = SpeakEasy.ManagerInfo.plebRtcIds[data];
-        SpeakEasy.LocalDataChannel.channels[plebrtcid].channel.peer.close(plebrtcid);
         //so ghettoo
+        SpeakEasy.LocalDataChannel.channels[plebrtcid].channel.peer.close(plebrtcid);
         delete SpeakEasy.ManagerInfo.plebs[data];
       };
     });
